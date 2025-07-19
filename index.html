@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internship Task-1</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+            font-family: "Poppins",sans-serif;
+        }
+        main{
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            width: 80%;
+            position: relative;
+
+            
+
+        }
+        header{
+            width: 60%;
+            height: 300px;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: 10px;
+            left: 50%;
+
+
+        }
+        .title-container{
+            border: 2px solid black;
+            height: 150px;
+            justify-content: center;
+            position: relative;
+            right: 130px;
+        }
+        .title-container h1 {
+            padding-left: 180px;
+            font-weight: bolder;
+            line-height: 20px;
+
+        }
+        .title-container p{
+            padding-left: 180px;
+            font-weight: bolder;
+        }
+        .option-container{
+             border: 2px solid black;
+            height: 150px;
+            justify-content: center;
+            position: relative;
+            right: 130px;
+            margin-top: 10px;
+          
+        }
+        .option-container ul{
+            display: flex;
+            justify-content:space-between;
+            padding-top: 40px;
+        }
+        .option-container ul li{
+            list-style: none;
+           
+        }
+        .option-container ul li a{
+            text-decoration: none;
+            text-align: center;
+            font-weight: 200;
+            font-style: normal;
+        }
+        section div{
+            position: absolute;
+            top: 400px;
+            left:200px;  
+        }
+        button{
+            position: absolute;
+            width: 200px;
+            font-size: large;
+            top: 590px;
+            left:500px
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Apex Planet Task -1 -->
+    <!-- Basic of HTML ,CSS and JavaScript -->
+    <main class="main-container">
+        <header>
+           
+            <div class="title-container">
+                <h1>The Practice Test</h1>
+                <p>Free Online Typing Lessons & Data Entry Lessons</p>
+            </div>
+            <div class="option-container">
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    
+                    <li><a href="#">Typing Practice</a><i class='bx bx-caret-down'></i></li>
+                    <li><a href="#">Typing Test</a><i class='bx bx-caret-down'></i></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+            
+        </header>
+
+        <section class="body-section">
+            <div>Lorem ipsum dolor sit amet consectetur adipisicing elit. Cum magni placeat libero natus quae amet ducimus, iusto asperiores numquam deserunt soluta, veniam unde animi sequi totam cupiditate, doloremque porro quidem?Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptas, consequatur voluptates itaque molestias ex ipsum quas repellat beatae. Soluta dolor facilis laboriosam velit aliquid cumque quas maiores aut rem harum.  Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero, mollitia officiis obcaecati quisquam iste nostrum harum eveniet blanditiis minus totam ipsa! Nemo magnam facere nihil tempore blanditiis fugiat consequatur. Provident?</div>
+        </section>
+        <button onclick="doTask()">start</button>
+    </main>
+    <script>
+        function doTask(){
+            const body =document.querySelector('body')
+            if(body.style.backgroundColor !== 'pink'){
+                body.style.backgroundColor = 'pink';
+                body.style.transition = '0.5s'
+                body.style.color = 'white'
+            }
+            else{
+                body.style.backgroundColor='white';
+                body.style.color='black'
+            }
+            
+            // alert('The Button is clicked')
+        }
+    </script>
+</body>
+</html>
