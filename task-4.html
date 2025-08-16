@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio • To‑Do • Shop</title>
+  <style>
+
+    :root{
+      --bg: #0b0f1a;
+      --bg-2:#0f1629;
+      --card:#121a2e;
+      --muted:#9fb0d8;
+      --text:#e9eeff;
+      --accent:#7c5cff;
+      --accent-2:#00e5ff;
+      --danger:#ff5c7c;
+      --ok:#3ddc97;
+      --warning:#ffd166;
+      --shadow: 0 10px 30px rgba(0,0,0,.35), 0 0 50px rgba(124,92,255,.15);
+      --glass: rgba(255,255,255,.06);
+      --radius: 16px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 600px at -10% -10%, rgba(124,92,255,.14), transparent 50%),
+        radial-gradient(900px 500px at 110% 10%, rgba(0,229,255,.10), transparent 50%),
+        radial-gradient(700px 500px at 50% 120%, rgba(255,92,124,.10), transparent 50%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.6;
+      overflow-x:hidden;
+    }
+    a{color:inherit;text-decoration:none}
+    .container{max-width:1200px;margin:0 auto;padding:24px}
+
+    header{
+      position:sticky;top:0;z-index:50;
+      backdrop-filter:saturate(140%) blur(10px);
+      background:linear-gradient(to right, rgba(12,17,34,.75), rgba(12,17,34,.45));
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .nav{
+      display:flex;align-items:center;justify-content:space-between;gap:16px;
+    }
+    .brand{
+      display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.6px
+    }
+    .brand .logo{
+      width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 20px rgba(124,92,255,.6), 0 0 30px rgba(0,229,255,.4) inset;
+    }
+    .tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .tab{
+      padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+      cursor:pointer;font-size:14px
+    }
+    .tab.active,.tab:hover{
+      transform:translateY(-1px);
+      box-shadow:0 6px 20px rgba(124,92,255,.25);
+      background:linear-gradient(180deg, rgba(124,92,255,.18), rgba(255,255,255,.06));
+      border-color: rgba(124,92,255,.45);
+    }
+
+    .hero{display:grid;grid-template-columns:1.2fr .8fr;gap:28px;align-items:center;padding:40px 0}
+    .glow{
+      position:relative;
+      border-radius: var(--radius);
+      padding:26px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .glow::after{
+      content:"";position:absolute;inset:-2px;
+      background: conic-gradient(from 180deg at 50% 50%, rgba(124,92,255,.0), rgba(124,92,255,.45), rgba(0,229,255,.0));
+      filter: blur(30px);opacity:.35;pointer-events:none;
+    }
+    h1{font-size:clamp(28px, 4vw, 48px);line-height:1.15;margin-bottom:14px}
+    .lead{color:var(--muted);font-size:18px}
+    .cta{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+    .btn{
+      padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.1);
+      background:linear-gradient(180deg, rgba(124,92,255,.25), rgba(124,92,255,.18));
+      box-shadow:0 10px 30px rgba(124,92,255,.25);
+      cursor:pointer;font-weight:600
+    }
+    .btn.ghost{background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));box-shadow:none}
+
+    .grid{display:grid;gap:18px}
+    .grid.cols-3{grid-template-columns: repeat(3, 1fr)}
+    .grid.cols-2{grid-template-columns: repeat(2, 1fr)}
+    @media (max-width: 900px){
+      .hero{grid-template-columns:1fr}
+      .grid.cols-3{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width: 640px){
+      .grid.cols-3,.grid.cols-2{grid-template-columns:1fr}
+    }
+
+    .card{background:var(--glass);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px}
+    .card h3{margin-bottom:6px}
+    .tag{display:inline-flex;gap:6px;align-items:center;font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(124,92,255,.14);border:1px solid rgba(124,92,255,.35);margin-right:6px}
+
+    .project{
+      position:relative;overflow:hidden
+    }
+    .project .thumb{
+      height:160px;border-radius:12px;margin-bottom:10px;background:
+        radial-gradient(400px 120px at 10% 10%, rgba(124,92,255,.28), transparent 40%),
+        radial-gradient(400px 120px at 90% 90%, rgba(0,229,255,.28), transparent 40%),
+        linear-gradient(135deg, #1a2442, #111a31);
+      display:flex;align-items:center;justify-content:center;
+      transform:scale(1);transition:transform .25s ease
+    }
+    .project:hover .thumb{transform:scale(1.03)}
+
+
+    form{display:grid;gap:12px}
+    input,select,textarea{
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:12px;color:var(--text);
+      padding:12px 14px;outline:none
+    }
+    input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(124,92,255,.15)}
+
+
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:13px}
+    .list{display:grid;gap:10px;margin-top:14px}
+    .todo{
+      display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
+      padding:12px;border-radius:12px;background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+      transition: transform .15s ease, background .2s ease;
+    }
+    .todo.done{opacity:.8;background:rgba(61,220,151,.08)}
+    .todo .title{font-weight:600}
+    .todo .meta{font-size:12px;color:var(--muted)}
+    .todo .prio{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.15)}
+    .prio.low{background:rgba(61,220,151,.12);border-color:rgba(61,220,151,.35)}
+    .prio.med{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.35)}
+    .prio.high{background:rgba(255,92,124,.12);border-color:rgba(255,92,124,.35)}
+    .actions{display:flex;gap:8px}
+    .iconbtn{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);cursor:pointer}
+
+    
+    .notes{display:grid;gap:12px;grid-template-columns:repeat(3, 1fr)}
+    .note{min-height:120px;border-radius:14px;padding:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05)}
+    .note h4{margin-bottom:6px}
+    @media (max-width: 900px){.notes{grid-template-columns:1fr 1fr}}
+    @media (max-width: 640px){.notes{grid-template-columns:1fr}}
+
+    .shop{display:grid;grid-template-columns:260px 1fr;gap:18px}
+    @media (max-width: 900px){.shop{grid-template-columns:1fr;}}
+    .filter{
+      position:sticky;top:78px;padding:14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)
+    }
+    .product-grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:14px}
+    @media (max-width: 900px){.product-grid{grid-template-columns:1fr 1fr}}
+    @media (max-width: 640px){.product-grid{grid-template-columns:1fr}}
+    .product-card{padding:12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+    .product-thumb{height:140px;border-radius:10px;margin-bottom:10px;background:linear-gradient(135deg,#1a2442,#111a31);display:flex;align-items:center;justify-content:center}
+    .price{font-weight:800}
+    .rating{font-size:12px;color:var(--warning)}
+
+    .hide{display:none !important}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .spacer{height:18px}
+    .fade-in{opacity:0;transform:translateY(8px);animation:fade .35s ease forwards}
+    @keyframes fade{to{opacity:1;transform:none}}
+    .pulse{
+      position:absolute;inset:auto auto -40px -40px;width:200px;height:200px;border-radius:50%;
+      background:radial-gradient(circle at 30% 30%, rgba(124,92,255,.45), rgba(124,92,255,0) 60%);
+      filter:blur(30px);opacity:.5;animation: float 6s ease-in-out infinite alternate;
+    }
+    @keyframes float{from{transform:translateY(0)}to{transform:translateY(-12px)}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand">
+        <div class="logo"></div>
+        <span>Logeshwaran.R</span>
+      </div>
+      <nav class="tabs" id="tabs">
+        <a href="#portfolio" class="tab active">Portfolio</a>
+        <a href="#todo" class="tab">To‑Do • Notes</a>
+        <a href="#shop" class="tab">Product Listing</a>
+        <a href="#contact" class="tab">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+   
+    <section id="portfolio" class="page">
+      <div class="hero">
+        <div class="glow">
+          <div class="pulse"></div>
+          <h1>Hi, I'm <span style="color:var(--accent)">Your Name</span> — Front‑End Developer</h1>
+          <p class="lead">I build responsive, accessible, and delightful web apps with modern JavaScript. Explore my projects, try the built‑in To‑Do/Notes app, and play with the interactive product listing demo.</p>
+          <div class="cta">
+            <a href="#projects" class="btn">View Projects</a>
+            <a href="#contact" class="btn ghost">Hire Me</a>
+          </div>
+        </div>
+        <div class="grid cols-1">
+          <div class="card">
+            <h3>Skills</h3>
+            <div class="spacer"></div>
+            <span class="tag">HTML5</span>
+            <span class="tag">CSS3</span>
+            <span class="tag">JavaScript (ES6+)</span>
+            <span class="tag">Responsive Design</span>
+            <span class="tag">Accessibility</span>
+            <span class="tag">Git</span>
+          </div>
+          <div class="card">
+            <h3>Highlights</h3>
+            <p class="lead">• 10+ mini‑projects • 3 production apps • love for micro‑interactions & performance.</p>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="projects" style="margin:18px 0">Featured Projects</h2>
+      <div class="grid cols-3" id="projectGrid"></div>
+    </section>
+
+
+    <section id="todo" class="page hide">
+      <div class="glow">
+        <h2>To‑Do & Notes — LocalStorage Powered</h2>
+        <p class="lead">Add tasks with priorities & due dates, filter/sort/search, and keep quick notes. Everything is saved on your device.</p>
+      </div>
+      <div class="spacer"></div>
+      <div class="grid cols-2">
+        
+        <div class="card">
+          <div class="row" style="justify-content:space-between">
+            <h3>Tasks</h3>
+            <div class="row">
+              <input id="searchTask" placeholder="Search…" />
+              <select id="filterStatus">
+                <option value="all">All</option>
+                <option value="open">Open</option>
+                <option value="done">Done</option>
+              </select>
+              <select id="sortTask">
+                <option value="created-desc">Newest</option>
+                <option value="created-asc">Oldest</option>
+                <option value="due-asc">Due ↑</option>
+                <option value="due-desc">Due ↓</option>
+                <option value="prio-desc">Priority ↓</option>
+                <option value="prio-asc">Priority ↑</option>
+              </select>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <form id="taskForm">
+            <div class="row">
+              <input id="taskTitle" required placeholder="Task title" />
+              <input id="taskDue" type="date" />
+              <select id="taskPrio">
+                <option value="low">Low</option>
+                <option value="med" selected>Medium</option>
+                <option value="high">High</option>
+              </select>
+              <button class="btn" type="submit">Add</button>
+              <button class="btn ghost" id="clearDone" type="button">Clear Done</button>
+            </div>
+          </form>
+          <div class="list" id="taskList"></div>
+        </div>
+
+       
+        <div class="card">
+          <div class="row" style="justify-content:space-between">
+            <h3>Notes</h3>
+            <div class="row">
+              <button class="btn" id="addNote">New Note</button>
+              <button class="btn ghost" id="clearNotes">Clear All</button>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="notes" id="notes"></div>
+        </div>
+      </div>
+    </section>
+
+    
+    <section id="shop" class="page hide">
+      <div class="glow">
+        <h2>Product Listing — Filter & Sort</h2>
+        <p class="lead">Try category filters, price range, search, and sort by rating or price. All client‑side with pure JavaScript.</p>
+      </div>
+      <div class="spacer"></div>
+      <div class="shop">
+        <aside class="filter">
+          <h3>Filters</h3>
+          <div class="spacer"></div>
+          <div>
+            <strong>Search</strong>
+            <input id="q" placeholder="Search products…" />
+          </div>
+          <div class="spacer"></div>
+          <div>
+            <strong>Category</strong>
+            <div class="list" id="catFilters"></div>
+          </div>
+          <div class="spacer"></div>
+          <div class="row">
+            <div style="flex:1">
+              <strong>Min Price</strong>
+              <input id="minPrice" type="number" placeholder="0" min="0" />
+            </div>
+            <div style="flex:1">
+              <strong>Max Price</strong>
+              <input id="maxPrice" type="number" placeholder="9999" min="0" />
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div>
+            <strong>Min Rating</strong>
+            <select id="minRating">
+              <option value="0">All</option>
+              <option value="3">3★+</option>
+              <option value="4">4★+</option>
+              <option value="4.5">4.5★+</option>
+            </select>
+          </div>
+          <div class="spacer"></div>
+          <button class="btn ghost" id="resetFilters" type="button">Reset Filters</button>
+        </aside>
+        <section>
+          <div class="row" style="justify-content:space-between">
+            <div class="row">
+              <span class="pill" id="count">0 items</span>
+            </div>
+            <div class="row">
+              <label for="sort">Sort:</label>
+              <select id="sort">
+                <option value="rating-desc">Rating ↓</option>
+                <option value="price-asc">Price ↑</option>
+                <option value="price-desc">Price ↓</option>
+                <option value="name-asc">Name A→Z</option>
+                <option value="name-desc">Name Z→A</option>
+              </select>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="product-grid" id="products"></div>
+        </section>
+      </div>
+    </section>
+
+
+    <section id="contact" class="page hide">
+      <div class="grid cols-2">
+        <div class="glow">
+          <h2>Let's work together</h2>
+          <p class="lead">Tell me about your project. I'll respond within 24 hours.</p>
+          <div class="spacer"></div>
+          <form id="contactForm">
+            <input required placeholder="Your name" id="cname" />
+            <input required type="email" placeholder="Your email" id="cemail" />
+            <textarea required rows="6" placeholder="Project details" id="cmsg"></textarea>
+            <button class="btn" type="submit">Send Message</button>
+            <span id="cstatus" class="pill" style="display:none;margin-left:10px"></span>
+          </form>
+        </div>
+        <div class="card">
+          <h3>Find me online</h3>
+          <div class="spacer"></div>
+          <div class="list">
+            <a class="pill" href="#">GitHub</a>
+            <a class="pill" href="#">LinkedIn</a>
+            <a class="pill" href="#">Twitter</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="container" style="opacity:.7;padding-bottom:40px">
+    <div class="row" style="justify-content:space-between">
+      <span>© <span id="yy"></span> NeoDark Studio</span>
+      <span>Built with vanilla JS • Dark mode first • Micro‑interactions</span>
+    </div>
+  </footer>
+
+  <script>
+ 
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    const save = (k,v)=>localStorage.setItem(k, JSON.stringify(v));
+    const load = (k,d)=>{try{return JSON.parse(localStorage.getItem(k)) ?? d}catch(e){return d}};
+
+    const pages = $$('.page');
+    const tabs = $$('#tabs .tab');
+    function show(hash){
+      const target = hash?.replace('#','') || 'portfolio';
+      pages.forEach(p=>p.classList.add('hide'));
+      const el = document.getElementById(target);
+      if(el){ el.classList.remove('hide'); window.scrollTo({top:0,behavior:'smooth'}); }
+      tabs.forEach(t=>t.classList.toggle('active', t.getAttribute('href') === '#' + target));
+    }
+    window.addEventListener('hashchange', ()=>show(location.hash));
+    show(location.hash);
+
+    
+    const sampleProjects = [
+      {title:'Auto Carousel', tags:['HTML','CSS','JS'], desc:'Infinite image slider with swipe & autoplay.', link:'#', gradient:['#7c5cff','#00e5ff']},
+      {title:'Canvas Particles', tags:['Canvas','Animation'], desc:'Interactive particle field reacting to mouse.', link:'#', gradient:['#ff5c7c','#7c5cff']},
+      {title:'Weather App', tags:['API','Async'], desc:'Fetch live weather with geolocation and cache.', link:'#', gradient:['#00e5ff','#3ddc97']},
+      {title:'Markdown Notes', tags:['Notes','LocalStorage'], desc:'Simple markdown notes with live preview.', link:'#', gradient:['#ffd166','#ff5c7c']},
+      {title:'Quiz Engine', tags:['Logic','State'], desc:'Reusable quiz component with progress and score.', link:'#', gradient:['#3ddc97','#00e5ff']},
+      {title:'Pomodoro', tags:['Timer','Productivity'], desc:'Focus timer with stats and notifications.', link:'#', gradient:['#7c5cff','#ffd166']},
+    ];
+    const projectGrid = $('#projectGrid');
+    function renderProjects(){
+      projectGrid.innerHTML = sampleProjects.map((p,i)=>`
+        <a class="card project fade-in" style="animation-delay:${i*60}ms" href="${p.link}">
+          <div class="thumb" style="background:
+            radial-gradient(400px 120px at 10% 10%, ${p.gradient[0]}33, transparent 40%),
+            radial-gradient(400px 120px at 90% 90%, ${p.gradient[1]}33, transparent 40%),
+            linear-gradient(135deg, #1a2442, #111a31);
+          ">
+            <span class="pill">${p.tags.join(' • ')}</span>
+          </div>
+          <h3>${p.title}</h3>
+          <p class="lead" style="font-size:14px">${p.desc}</p>
+        </a>
+      `).join('');
+    }
+    renderProjects();
+
+    const TASKS_KEY = 'neodark.tasks.v1';
+    let tasks = load(TASKS_KEY, []);
+
+    function uid(){ return Math.random().toString(36).slice(2,9); }
+    function prioVal(p){ return p==='high'?3:p==='med'?2:1 }
+
+    function renderTasks(){
+      const q = $('#searchTask').value.toLowerCase();
+      const status = $('#filterStatus').value;
+      const sort = $('#sortTask').value;
+
+      let list = tasks.filter(t =>
+        t.title.toLowerCase().includes(q) && (status==='all' || (status==='done'? t.done : !t.done))
+      );
+
+      list.sort((a,b)=>{
+        switch(sort){
+          case 'created-asc': return a.created - b.created;
+          case 'created-desc': return b.created - a.created;
+          case 'due-asc': return (a.due||Infinity) - (b.due||Infinity);
+          case 'due-desc': return (b.due||-Infinity) - (a.due||-Infinity);
+          case 'prio-desc': return prioVal(b.prio) - prioVal(a.prio);
+          case 'prio-asc': return prioVal(a.prio) - prioVal(b.prio);
+        }
+      });
+
+      $('#taskList').innerHTML = list.map(t=>`
+        <div class="todo fade-in ${t.done?'done':''}" data-id="${t.id}">
+          <input type="checkbox" ${t.done?'checked':''} aria-label="Done" />
+          <div>
+            <div class="row" style="justify-content:space-between">
+              <span class="title">${t.title}</span>
+              <span class="prio ${t.prio}">${t.prio.toUpperCase()}</span>
+            </div>
+            <div class="meta">
+              ${t.due?`Due: ${new Date(t.due).toLocaleDateString()}`:'No due date'} • Created: ${new Date(t.created).toLocaleString()}
+            </div>
+          </div>
+          <div class="actions">
+            <button class="iconbtn" data-act="edit" title="Edit">✏️</button>
+            <button class="iconbtn" data-act="del" title="Delete">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+      save(TASKS_KEY, tasks);
+    }
+
+    $('#taskForm').addEventListener('submit', e=>{
+      e.preventDefault();
+      const title = $('#taskTitle').value.trim();
+      if(!title) return;
+      tasks.push({ id:uid(), title, prio:$('#taskPrio').value, due: $('#taskDue').value? new Date($('#taskDue').value).getTime(): null, done:false, created: Date.now() });
+      e.target.reset();
+      renderTasks();
+    });
+
+    $('#taskList').addEventListener('click', e=>{
+      const row = e.target.closest('.todo');
+      if(!row) return;
+      const id = row.dataset.id;
+      if(e.target.matches('input[type="checkbox"]')){
+        const t = tasks.find(x=>x.id===id); t.done = e.target.checked; renderTasks(); return;
+      }
+      if(e.target.dataset.act==='del'){
+        tasks = tasks.filter(x=>x.id!==id); renderTasks(); return;
+      }
+      if(e.target.dataset.act==='edit'){
+        const t = tasks.find(x=>x.id===id);
+        const title = prompt('Edit task title', t.title);
+        if(title!==null){ t.title = title.trim()||t.title; }
+        const prio = prompt('Priority low/med/high', t.prio);
+        if(prio && ['low','med','high'].includes(prio)) t.prio = prio;
+        const due = prompt('Due date (YYYY-MM-DD) or empty', t.due? new Date(t.due).toISOString().slice(0,10):'');
+        t.due = due? new Date(due).getTime(): null;
+        renderTasks();
+      }
+    });
+
+    $('#clearDone').addEventListener('click', ()=>{ tasks = tasks.filter(t=>!t.done); renderTasks(); });
+    $('#searchTask').addEventListener('input', renderTasks);
+    $('#filterStatus').addEventListener('change', renderTasks);
+    $('#sortTask').addEventListener('change', renderTasks);
+    renderTasks();
+
+    const NOTES_KEY = 'neodark.notes.v1';
+    let notes = load(NOTES_KEY, []);
+    function renderNotes(){
+      $('#notes').innerHTML = notes.map((n,i)=>`
+        <div class="note fade-in" data-i="${i}" style="background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));">
+          <input value="${n.title}" placeholder="Title" style="width:100%;margin-bottom:6px" />
+          <textarea rows="6" placeholder="Write something…" style="width:100%">${n.body}</textarea>
+          <div class="row" style="justify-content:space-between;margin-top:8px">
+            <span class="pill">${new Date(n.updated).toLocaleString()}</span>
+            <button class="iconbtn" data-act="del" title="Delete">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+      save(NOTES_KEY, notes);
+    }
+    $('#addNote').addEventListener('click', ()=>{ notes.unshift({title:'', body:'', updated: Date.now()}); renderNotes(); });
+    $('#clearNotes').addEventListener('click', ()=>{ if(confirm('Delete all notes?')){ notes=[]; renderNotes(); }});
+    $('#notes').addEventListener('input', e=>{
+      const wrap = e.target.closest('.note'); if(!wrap) return; const i = +wrap.dataset.i;
+      const [titleEl, bodyEl] = wrap.querySelectorAll('input,textarea');
+      notes[i].title = titleEl.value; notes[i].body = bodyEl.value; notes[i].updated = Date.now(); save(NOTES_KEY, notes);
+      wrap.querySelector('.pill').textContent = new Date(notes[i].updated).toLocaleString();
+    });
+    $('#notes').addEventListener('click', e=>{
+      if(e.target.dataset.act==='del'){
+        const i = +e.target.closest('.note').dataset.i; notes.splice(i,1); renderNotes();
+      }
+    })
+    renderNotes();
+
+    const ITEMS = [
+      {id:1, name:'Aurora Headphones', category:'Audio', price:149, rating:4.6, stock:true},
+      {id:2, name:'Nebula Keyboard', category:'Peripherals', price:99, rating:4.3, stock:true},
+      {id:3, name:'Lumen Monitor 27"', category:'Displays', price:289, rating:4.4, stock:true},
+      {id:4, name:'Quasar Mouse', category:'Peripherals', price:49, rating:4.1, stock:true},
+      {id:5, name:'Ion Speaker Mini', category:'Audio', price:79, rating:4.0, stock:false},
+      {id:6, name:'Photon Webcam', category:'Peripherals', price:69, rating:3.9, stock:true},
+      {id:7, name:'Vector SSD 1TB', category:'Storage', price:119, rating:4.7, stock:true},
+      {id:8, name:'Nimbus Laptop Stand', category:'Accessories', price:39, rating:4.5, stock:true},
+      {id:9, name:'ZenPad 10.5', category:'Tablets', price:399, rating:4.2, stock:true},
+      {id:10, name:'Halo Microphone', category:'Audio', price:129, rating:4.4, stock:true},
+      {id:11, name:'Pulse Charger 65W', category:'Accessories', price:29, rating:4.1, stock:true},
+      {id:12, name:'Drift Earbuds', category:'Audio', price:59, rating:3.7, stock:true},
+    ];
+
+    const productsEl = $('#products');
+    const countEl = $('#count');
+    const qEl = $('#q');
+    const catFiltersEl = $('#catFilters');
+
+    const cats = [...new Set(ITEMS.map(i=>i.category))];
+    catFiltersEl.innerHTML = cats.map(c=>`<label class="row"><input type="checkbox" value="${c}"> ${c}</label>`).join('');
+
+    function stars(n){
+      const full = '★'.repeat(Math.floor(n));
+      const half = (n%1>=.5)?'½':''; // visual hint
+      const empty = '☆'.repeat(5-Math.ceil(n));
+      return `<span class="rating" title="${n.toFixed(1)}">${full}${empty} ${n.toFixed(1)}</span>`
+    }
+
+    function renderProducts(){
+      const q = qEl.value.toLowerCase();
+      const sort = $('#sort').value;
+      const min = parseFloat($('#minPrice').value)||0;
+      const max = parseFloat($('#maxPrice').value)||Infinity;
+      const minR = parseFloat($('#minRating').value)||0;
+      const activeCats = Array.from(catFiltersEl.querySelectorAll('input:checked')).map(i=>i.value);
+
+      let list = ITEMS.filter(p =>
+        (p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)) &&
+        p.price>=min && p.price<=max && p.rating>=minR &&
+        (activeCats.length? activeCats.includes(p.category): true)
+      );
+
+      list.sort((a,b)=>{
+        switch(sort){
+          case 'rating-desc': return b.rating - a.rating;
+          case 'price-asc': return a.price - b.price;
+          case 'price-desc': return b.price - a.price;
+          case 'name-asc': return a.name.localeCompare(b.name);
+          case 'name-desc': return b.name.localeCompare(a.name);
+        }
+      });
+
+      countEl.textContent = `${list.length} item${list.length!==1?'s':''}`;
+
+      productsEl.innerHTML = list.map((p,i)=>`
+        <div class="product-card fade-in" style="animation-delay:${i*40}ms">
+          <div class="product-thumb">
+            <span class="pill">${p.category}</span>
+          </div>
+          <h4 style="margin:6px 0">${p.name}</h4>
+          <div class="row" style="justify-content:space-between">
+            <span class="price">₹${p.price}</span>
+            ${stars(p.rating)}
+          </div>
+          <div class="row" style="margin-top:10px;justify-content:space-between">
+            <span class="pill" style="background:${p.stock?'rgba(61,220,151,.15)':'rgba(255,92,124,.15)'}">${p.stock?'In stock':'Out of stock'}</span>
+            <button class="btn" ${p.stock?'':'disabled'}>Add to cart</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    qEl.addEventListener('input', renderProducts);
+    $('#sort').addEventListener('change', renderProducts);
+    $('#minPrice').addEventListener('input', renderProducts);
+    $('#maxPrice').addEventListener('input', renderProducts);
+    $('#minRating').addEventListener('change', renderProducts);
+    catFiltersEl.addEventListener('change', renderProducts);
+    $('#resetFilters').addEventListener('click', ()=>{
+      qEl.value=''; $('#minPrice').value=''; $('#maxPrice').value=''; $('#minRating').value='0';
+      catFiltersEl.querySelectorAll('input').forEach(i=>i.checked=false); renderProducts();
+    });
+    renderProducts();
+
+    $('#contactForm').addEventListener('submit', e=>{
+      e.preventDefault();
+      const name = $('#cname').value.trim();
+      const email = $('#cemail').value.trim();
+      const msg = $('#cmsg').value.trim();
+      const ok = name && /.+@.+\..+/.test(email) && msg.length>10;
+      const s = $('#cstatus');
+      s.style.display='inline-flex';
+      s.textContent = ok? 'Message queued ✅ (demo)' : 'Please fill all fields properly';
+      s.style.background = ok? 'rgba(61,220,151,.15)' : 'rgba(255,92,124,.15)';
+    });
+
+    $('#yy').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
