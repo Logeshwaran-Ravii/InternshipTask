@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dark Capstone – Interactive Web App</title>
+  <meta name="description" content="A single-file capstone web app with animations, interactivity, performance optimizations, and responsive design." />
+  <style>
+    /* =========================
+       DESIGN TOKENS (Dark Theme)
+       Use CSS variables so theming is easy & fast.
+    ========================== */
+    :root {
+      --hue: 260;                 /* Change this for accent color */
+      --bg-0: hsl(240 15% 8%);    /* backdrop */
+      --bg-1: hsl(240 14% 11%);   /* cards */
+      --bg-2: hsl(240 14% 16%);
+      --fg-0: hsl(0 0% 98%);
+      --fg-1: hsl(0 0% 85%);
+      --fg-dim: hsl(0 0% 70%);
+      --accent: hsl(var(--hue) 85% 60%);
+      --accent-2: hsl(var(--hue) 90% 50%);
+      --success: hsl(160 80% 45%);
+      --warn: hsl(45 100% 50%);
+      --danger: hsl(0 80% 55%);
+      --shadow: 0 10px 30px hsl(0 0% 0% / .35);
+      --radius-xl: 18px;
+      --radius-2xl: 24px;
+      --gap: 16px;
+      --glass: linear-gradient(
+        180deg,
+        hsl(0 0% 100% / .06),
+        hsl(0 0% 100% / .03)
+      );
+    }
+
+    /* Global resets */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      color: var(--fg-0);
+      background: var(--bg-0);
+      overflow-x: hidden;
+    }
+
+    /* Animated gradient halo background */
+    .bg-animated {
+      position: fixed; inset: -20vmax; z-index: -2;
+      filter: blur(50px) saturate(120%);
+      background:
+        radial-gradient(40vmax 40vmax at 10% 10%, hsl(var(--hue) 85% 35% / .25), transparent 60%),
+        radial-gradient(35vmax 35vmax at 90% 20%, hsl(200 100% 40% / .2), transparent 60%),
+        radial-gradient(45vmax 45vmax at 50% 90%, hsl(320 85% 40% / .18), transparent 60%);
+      animation: float-halo 18s linear infinite alternate;
+      pointer-events: none;
+    }
+    @keyframes float-halo {
+      from { transform: translate3d(-3%, -2%, 0) rotate(0.5deg) scale(1); }
+      to   { transform: translate3d(3%, 2%, 0) rotate(-0.5deg) scale(1.03); }
+    }
+
+    /* Subtle noise texture overlay for depth (no extra HTTP requests) */
+    .noise {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.03"/></svg>');
+      mix-blend-mode: soft-light;
+    }
+
+    /* Layout */
+    header {
+      position: sticky; top: 0; z-index: 20;
+      backdrop-filter: blur(8px);
+      background: linear-gradient(180deg, hsl(0 0% 0% / .55), transparent);
+      border-bottom: 1px solid hsl(0 0% 100% / .06);
+    }
+    .nav {
+      max-width: 1200px; margin: 0 auto; padding: 14px clamp(14px, 4vw, 28px);
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .4px; }
+    .brand .logo { width: 36px; height: 36px; border-radius: 12px; background: var(--glass); box-shadow: var(--shadow); display: grid; place-items: center; }
+    .brand .spark { inline-size: 18px; block-size: 18px; background: conic-gradient(from 180deg, var(--accent), transparent 55%); border-radius: 50%; filter: blur(.3px) saturate(140%); }
+
+    .search {
+      display: flex; gap: 10px; align-items: center; justify-content: center;
+    }
+    .search input {
+      width: min(520px, 80vw); padding: 11px 14px; border-radius: 12px; border: 1px solid hsl(0 0% 100% / .08);
+      background: var(--bg-2); color: var(--fg-0);
+      outline: none; transition: border .2s ease, box-shadow .2s ease;
+    }
+    .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px hsl(var(--hue) 85% 60% / .25); }
+
+    .actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .btn {
+      --bg: var(--bg-2);
+      display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid hsl(0 0% 100% / .08);
+      background: var(--bg); color: var(--fg-0); border-radius: 12px; cursor: pointer;
+      transition: transform .08s ease, filter .2s ease, background .2s ease;
+    }
+    .btn:hover { filter: brightness(1.15); }
+    .btn:active { transform: translateY(1px) scale(.98); }
+    .btn.accent { --bg: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; }
+
+    main { max-width: 1200px; margin: 22px auto; padding: 0 clamp(14px, 4vw, 28px) 100px; }
+
+    /* Responsive grid sections */
+    .grid {
+      display: grid; gap: var(--gap);
+      grid-template-columns: repeat(12, 1fr);
+    }
+    .card {
+      background: var(--bg-1); border: 1px solid hsl(0 0% 100% / .06); border-radius: var(--radius-2xl);
+      padding: clamp(14px, 2.4vw, 22px); box-shadow: var(--shadow);
+    }
+    .card h3 { margin: 0 0 8px; }
+    .muted { color: var(--fg-dim); font-size: .95rem; }
+
+    /* Section titles */
+    .section-title { display: flex; align-items: center; gap: 10px; margin: 28px 0 14px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 6px hsl(var(--hue) 85% 60% / .15); }
+
+    /* HERO */
+    .hero { grid-column: 1 / -1; display: grid; grid-template-columns: 1.2fr .8fr; gap: var(--gap); align-items: stretch; }
+    .hero-left { position: relative; overflow: clip; border-radius: var(--radius-2xl); background: linear-gradient(180deg, hsl(0 0% 100% / .05), hsl(0 0% 0% / .2)), var(--bg-1); border: 1px solid hsl(0 0% 100% / .06); }
+    .hero-cta { position: absolute; inset: auto 20px 20px 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .title { font-weight: 900; font-size: clamp(28px, 5vw, 44px); line-height: 1.05; margin: 22px; }
+    .subtitle { color: var(--fg-1); margin: 0 22px 100px; }
+    .hero-right { display: grid; gap: var(--gap); grid-template-rows: 1fr 1fr; }
+
+    /* MARQUEE */
+    .marquee { display: flex; gap: 28px; overflow: hidden; border-radius: var(--radius-xl); border: 1px solid hsl(0 0% 100% / .06); background: var(--bg-2); align-items: center; }
+    .marquee-track { display: flex; gap: 28px; padding: 10px 0; animation: scroll 16s linear infinite; }
+    .pill { padding: 6px 10px; border-radius: 999px; background: hsl(0 0% 100% / .06); border: 1px solid hsl(0 0% 100% / .1); white-space: nowrap; }
+    @keyframes scroll { to { transform: translateX(-50%);} }
+
+    /* PRODUCTS */
+    .tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+    .tools .input, select { padding: 10px 12px; border-radius: 12px; background: var(--bg-2); color: var(--fg-0); border: 1px solid hsl(0 0% 100% / .08); }
+    .products { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--gap); }
+    .product { position: relative; display: grid; gap: 10px; grid-template-rows: auto 1fr auto; }
+    .product img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; border: 1px solid hsl(0 0% 100% / .08); background: hsl(0 0% 100% / .02); }
+    .price { font-weight: 800; }
+    .badge { position: absolute; top: 10px; left: 10px; font-size: 12px; padding: 6px 8px; background: hsl(0 0% 100% / .12); border: 1px solid hsl(0 0% 100% / .18); border-radius: 10px; }
+
+    /* CART (drawer) */
+    .cart { position: fixed; top: 0; right: 0; width: min(380px, 92vw); height: 100dvh; background: var(--bg-1); border-left: 1px solid hsl(0 0% 100% / .08); transform: translateX(105%); transition: transform .35s ease; z-index: 40; display: grid; grid-template-rows: auto 1fr auto; }
+    .cart.open { transform: translateX(0%); }
+    .cart header { position: sticky; top: 0; background: var(--bg-1); padding: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .cart-items { overflow: auto; padding: 14px; display: grid; gap: 10px; }
+    .cart-item { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; align-items: center; padding: 10px; border-radius: 12px; background: var(--bg-2); }
+    .cart-item img { width: 64px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid hsl(0 0% 100% / .08); }
+    .cart footer { padding: 14px; border-top: 1px solid hsl(0 0% 100% / .08); }
+
+    /* BLOG / ACCORDION */
+    .accordion { display: grid; gap: 10px; }
+    details { border: 1px solid hsl(0 0% 100% / .08); border-radius: 12px; background: var(--bg-2); padding: 8px 12px; }
+    summary { cursor: pointer; font-weight: 700; }
+
+    /* GALLERY */
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--gap); }
+    .gallery img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 16px; border: 1px solid hsl(0 0% 100% / .08); opacity: 0; transform: translateY(10px) scale(.98); transition: opacity .6s ease, transform .6s ease; }
+    .gallery img.visible { opacity: 1; transform: none; }
+
+    /* TOASTS */
+    .toasts { position: fixed; bottom: 16px; right: 16px; display: grid; gap: 10px; z-index: 50; }
+    .toast { background: linear-gradient(180deg, hsl(0 0% 100% / .06), hsl(0 0% 100% / .03)); border: 1px solid hsl(0 0% 100% / .12); padding: 12px 14px; border-radius: 12px; box-shadow: var(--shadow); }
+
+    /* FOOTER */
+    footer.app { margin-top: 40px; padding: 24px; border-top: 1px solid hsl(0 0% 100% / .06); color: var(--fg-1); }
+
+    /* MEDIA QUERIES */
+    @media (max-width: 960px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-cta { position: static; margin: 10px 20px 20px; }
+    }
+
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .marquee-track { animation: none; }
+      .bg-animated { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Decorative background layers -->
+  <div class="bg-animated" aria-hidden="true"></div>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header>
+    <div class="nav">
+      <div class="brand">
+        <div class="logo"><div class="spark" aria-hidden="true"></div></div>
+        <span>Dark Capstone</span>
+      </div>
+
+      <div class="search">
+        <input id="globalSearch" type="search" placeholder="Search products, posts, or gallery… (Press / to focus)" aria-label="Global search" />
+      </div>
+
+      <div class="actions">
+        <button id="toggleCart" class="btn" title="Toggle Cart" aria-expanded="false">🛒 Cart <span id="cartCount" class="muted">(0)</span></button>
+        <button id="toggleTheme" class="btn accent" title="Randomize Accent">🎨 Accent</button>
+        <button id="openSettings" class="btn" title="Open Settings">⚙️ Settings</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="grid hero" aria-label="Hero">
+      <div class="hero-left">
+        <h1 class="title">Build. Animate. Optimize. 🚀</h1>
+        <p class="subtitle">A single-file web app showcasing interactivity, performance tricks, lazy loading, and gorgeous dark-mode design. Try the search, add to cart, open settings, and scroll the gallery!</p>
+        <div class="hero-cta">
+          <button class="btn accent" onclick="smoothScroll('#productsSection')">Shop Demo</button>
+          <button class="btn" onclick="smoothScroll('#blogSection')">Read Blog</button>
+          <button class="btn" onclick="smoothScroll('#gallerySection')">See Gallery</button>
+        </div>
+        <!-- Decorative canvas particles (no external libs) -->
+        <canvas id="fx" width="1200" height="420" aria-hidden="true" style="width:100%; height:320px; display:block; border-top-left-radius: var(--radius-2xl); border-top-right-radius: var(--radius-2xl);"></canvas>
+      </div>
+      <div class="hero-right">
+        <div class="card">
+          <h3>Performance Wins</h3>
+          <p class="muted">• Lazy-loading images with IntersectionObserver
+            <br/>• Minimal HTTP requests (single-file!)
+            <br/>• GPU-friendly transforms & will-change
+            <br/>• Respect <code>prefers-reduced-motion</code>
+            <br/>• Debounced search & throttled scroll handlers</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+            <button class="btn" onclick="measurePaint()">📊 Measure Paint</button>
+            <button class="btn" onclick="fakeWork()">⚡ Stress Test</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Quick Tips</h3>
+          <ul class="muted" style="margin:6px 0 0 18px;">
+            <li>Press <b>/</b> to focus search</li>
+            <li>Press <b>?</b> for keyboard shortcuts</li>
+            <li>Use <b>⚙️ Settings</b> to tweak motion & hue</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- MARQUEE -->
+    <div class="marquee" style="margin-top:16px;">
+      <div class="marquee-track" id="marqueeA" aria-hidden="true"></div>
+      <div class="marquee-track" id="marqueeB" aria-hidden="true"></div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <h2 class="section-title" id="productsSection"><span class="dot"></span> Demo Products</h2>
+    <div class="tools">
+      <input id="filterInput" class="input" placeholder="Filter by name…" />
+      <select id="sortSelect">
+        <option value="pop">Sort: Popular</option>
+        <option value="asc">Price: Low → High</option>
+        <option value="desc">Price: High → Low</option>
+      </select>
+      <button class="btn" id="clearFilters">Clear</button>
+    </div>
+
+    <div id="products" class="products"></div>
+
+    <h2 class="section-title" id="blogSection"><span class="dot"></span> Tech Blog (Accordion)</h2>
+    <div class="accordion" id="blog"></div>
+
+    
+    <h2 class="section-title" id="gallerySection"><span class="dot"></span> Lazy Gallery</h2>
+    <div class="gallery" id="gallery"></div>
+
+  
+  </main>
+
+  <aside class="cart" id="cartDrawer" aria-hidden="true" aria-label="Shopping cart">
+    <header>
+      <strong>🛒 Your Cart</strong>
+      <button class="btn" id="closeCart">Close</button>
+    </header>
+    <div class="cart-items" id="cartItems"></div>
+    <footer>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <strong>Total:</strong>
+        <strong id="cartTotal">$0.00</strong>
+      </div>
+      <button class="btn accent" style="width:100%;" onclick="checkout()">Checkout</button>
+    </footer>
+  </aside>
+
+
+  <dialog id="settings" style="border:none; border-radius: 16px; padding:0; background: var(--bg-1); color: var(--fg-0);">
+    <div class="card" style="min-width:min(560px, 90vw);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h3>⚙️ Settings</h3>
+        <button class="btn" onclick="document.getElementById('settings').close()">✖</button>
+      </div>
+      <div class="muted" style="display:grid; gap:14px;">
+        <label style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" id="reducedMotionToggle" /> Reduce Motion (override system)
+        </label>
+        <label style="display:flex; align-items:center; gap:10px;">
+          Accent Hue <input id="hueRange" type="range" min="180" max="340" step="1" style="width:220px;" />
+          <span id="hueValue" class="pill">260</span>
+        </label>
+        <button class="btn" onclick="clearAppData()">🧹 Clear App Data</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- TOASTS -->
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="true"></div>
+
+  <script defer>
+  // =====================================
+  // Utility helper
+  // =====================================
+  const $ = (sel, el=document) => el.querySelector(sel);
+  const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+  const fmt = n => `$${n.toFixed(2)}`;
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+  function smoothScroll(hash) {
+    const t = document.querySelector(hash);
+    if (!t) return;
+    t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function toast(msg, ms=2200) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    $('#toasts').appendChild(t);
+    setTimeout(() => t.remove(), ms);
+  }
+
+  // Debounce & throttle
+  const debounce = (fn, wait=250) => { let h; return (...a) => { clearTimeout(h); h=setTimeout(() => fn(...a), wait); } };
+  const throttle = (fn, wait=150) => { let t=0; return (...a) => { const n=Date.now(); if (n-t>=wait) { t=n; fn(...a); } } };
+
+  // Persist
+  const store = {
+    get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+    set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+    del: (k) => localStorage.removeItem(k)
+  };
+
+  // =====================================
+  // Data (mock) — could be fetched from API
+  // =====================================
+  const PRODUCTS = Array.from({length: 18}, (_,i) => ({
+    id: i+1,
+    name: ['Nebula Headphones','Stellar Keyboard','Quantum Mouse','Aurora Lamp','Orbit Speaker','Lunar Charger','Comet Cable','Nova Webcam','Photon Mic','Cosmo Stand','Galaxy SSD','Meteor Hub','Pulsar Pad','Eclipse Case','Ion Fan','Spark LED','Astro Clock','Vortex Chair'][i],
+    price: [149,119,49,89,129,39,19,99,79,29,159,69,24,34,45,22,44,199][i],
+    tag: ['audio','input','input','home','audio','power','cable','video','audio','accessory','storage','hub','accessory','case','cooling','lighting','home','furniture'][i],
+    img: `https://picsum.photos/seed/p${i+1}/600/400`
+  }));
+
+  const POSTS = [
+    { t: 'Optimize Critical Rendering Path', c: 'Inline critical CSS, defer non-critical JS, and preconnect to origins to reduce time-to-interactive.' },
+    { t: 'Lazy Loading Patterns', c: 'Use loading="lazy" for images, IntersectionObserver for component hydration, and dynamic import for route-level code.' },
+    { t: 'Animation Performance', c: 'Prefer transform & opacity for 60fps animations. Avoid layout-thrashing properties like width/left/top during animation.' },
+    { t: 'Responsive Strategies', c: 'Use CSS Grid and clamp() for fluid typography and spacing. Test on real devices and emulators.' },
+  ];
+
+  const GALLERY = Array.from({length: 24}, (_,i) => `https://picsum.photos/seed/g${i+1}/800/800`);
+
+  // =====================================
+  // Accent & Settings
+  // =====================================
+  const hueRange = $('#hueRange');
+  const hueValue = $('#hueValue');
+  const reducedMotionToggle = $('#reducedMotionToggle');
+
+  function applyHue(h) {
+    document.documentElement.style.setProperty('--hue', h);
+    hueValue.textContent = h;
+    store.set('hue', h);
+  }
+
+  function applyReducedMotion(enabled) {
+    document.documentElement.style.setProperty('scroll-behavior', enabled ? 'auto' : 'smooth');
+    document.documentElement.style.setProperty('--motion', enabled ? '0' : '1');
+    store.set('reducedMotion', !!enabled);
+  }
+
+  $('#toggleTheme').addEventListener('click', () => {
+    const h = Math.floor(200 + Math.random()*120);
+    hueRange.value = h; applyHue(h);
+    toast('Accent updated ✨');
+  });
+
+  $('#openSettings').addEventListener('click', () => {
+    const dlg = $('#settings'); dlg.showModal();
+  });
+
+  hueRange.addEventListener('input', e => applyHue(e.target.value));
+  reducedMotionToggle.addEventListener('change', e => applyReducedMotion(e.target.checked));
+
+  function loadSettings() {
+    const h = store.get('hue', 260); hueRange.value = h; applyHue(h);
+    const rm = store.get('reducedMotion', false); reducedMotionToggle.checked = rm; applyReducedMotion(rm);
+  }
+
+  function clearAppData() {
+    localStorage.clear(); toast('App data cleared');
+  }
+
+  // =====================================
+  // Products + Cart
+  // =====================================
+  const productsEl = $('#products');
+  const filterInput = $('#filterInput');
+  const sortSelect = $('#sortSelect');
+  const clearFilters = $('#clearFilters');
+
+  const cart = {
+    items: store.get('cart', []),
+    add(p) { const f = this.items.find(i => i.id===p.id); if (f) f.qty++; else this.items.push({ ...p, qty: 1 }); this.sync(); toast(`Added ${p.name}`); renderCart(); },
+    remove(id) { this.items = this.items.filter(i => i.id!==id); this.sync(); renderCart(); },
+    inc(id) { const it = this.items.find(i=>i.id===id); if (it) { it.qty++; this.sync(); renderCart(); } },
+    dec(id) { const it = this.items.find(i=>i.id===id); if (it && it.qty>1) { it.qty--; } else { this.remove(id); return; } this.sync(); renderCart(); },
+    total() { return this.items.reduce((s,i)=>s+i.price*i.qty,0); },
+    count() { return this.items.reduce((s,i)=>s+i.qty,0); },
+    sync() { store.set('cart', this.items); updateCartCount(); }
+  };
+
+  function renderProducts(list=PRODUCTS) {
+    productsEl.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    list.forEach(p => {
+      const card = document.createElement('div'); card.className = 'card product';
+      card.innerHTML = `
+        <span class="badge">${p.tag}</span>
+        <img src="${p.img}" loading="lazy" alt="${p.name}"/>
+        <div>
+          <strong>${p.name}</strong>
+          <div class="muted">${p.tag.toUpperCase()}</div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span class="price">${fmt(p.price)}</span>
+          <button class="btn" data-id="${p.id}">Add</button>
+        </div>`;
+      frag.appendChild(card);
+    });
+    productsEl.appendChild(frag);
+  }
+
+  productsEl.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-id]'); if (!btn) return;
+    const id = +btn.dataset.id; const p = PRODUCTS.find(x=>x.id===id); cart.add(p);
+  });
+
+  function applyFilters() {
+    const q = filterInput.value.trim().toLowerCase();
+    let list = PRODUCTS.filter(p => p.name.toLowerCase().includes(q) || p.tag.includes(q));
+    const s = sortSelect.value;
+    if (s==='asc') list.sort((a,b)=>a.price-b.price);
+    else if (s==='desc') list.sort((a,b)=>b.price-a.price);
+    else list.sort((a,b)=>a.id-b.id);
+    renderProducts(list);
+  }
+
+  filterInput.addEventListener('input', debounce(applyFilters, 120));
+  sortSelect.addEventListener('change', applyFilters);
+  clearFilters.addEventListener('click', () => { filterInput.value=''; sortSelect.value='pop'; applyFilters(); });
+
+  // Cart UI
+  const cartDrawer = $('#cartDrawer');
+  const toggleCartBtn = $('#toggleCart');
+  const closeCartBtn = $('#closeCart');
+  const cartItemsEl = $('#cartItems');
+  const cartTotalEl = $('#cartTotal');
+  const cartCountEl = $('#cartCount');
+
+  function updateCartCount() { cartCountEl.textContent = `(${cart.count()})`; }
+
+  function renderCart() {
+    cartItemsEl.innerHTML = '';
+    if (!cart.items.length) {
+      cartItemsEl.innerHTML = '<div class="muted">Your cart is empty.</div>';
+    } else {
+      cart.items.forEach(it => {
+        const row = document.createElement('div'); row.className = 'cart-item';
+        row.innerHTML = `
+          <img src="${it.img}" alt="${it.name}"/>
+          <div>
+            <strong>${it.name}</strong>
+            <div class="muted">${fmt(it.price)} × ${it.qty}</div>
+          </div>
+          <div style="display:grid; gap:6px;">
+            <button class="btn" data-act="inc" data-id="${it.id}">＋</button>
+            <button class="btn" data-act="dec" data-id="${it.id}">－</button>
+            <button class="btn" data-act="rm" data-id="${it.id}">🗑</button>
+          </div>`;
+        cartItemsEl.appendChild(row);
+      });
+    }
+    cartTotalEl.textContent = fmt(cart.total());
+    updateCartCount();
+  }
+
+  cartItemsEl.addEventListener('click', e => {
+    const b = e.target.closest('button[data-act]'); if(!b) return;
+    const id = +b.dataset.id; const act = b.dataset.act;
+    if (act==='inc') cart.inc(id);
+    else if (act==='dec') cart.dec(id);
+    else if (act==='rm') cart.remove(id);
+  });
+
+  function openCart(open=true){ cartDrawer.classList.toggle('open', open); cartDrawer.setAttribute('aria-hidden', String(!open)); toggleCartBtn.setAttribute('aria-expanded', String(open)); }
+  toggleCartBtn.addEventListener('click', () => openCart(!cartDrawer.classList.contains('open')));
+  closeCartBtn.addEventListener('click', () => openCart(false));
+
+  function checkout(){ toast('Checkout complete ✅'); cart.items = []; cart.sync(); renderCart(); openCart(false); }
+
+  // =====================================
+  // Blog (accordion)
+  // =====================================
+  const blogEl = $('#blog');
+  function renderBlog(){
+    blogEl.innerHTML = '';
+    POSTS.forEach(p => {
+      const d = document.createElement('details');
+      const s = document.createElement('summary'); s.textContent = p.t;
+      const c = document.createElement('div'); c.className = 'muted'; c.style.margin = '6px 0 8px'; c.textContent = p.c;
+      d.appendChild(s); d.appendChild(c); blogEl.appendChild(d);
+    });
+  }
+
+  // =====================================
+  // Gallery (lazy + reveal)
+  // =====================================
+  const galleryEl = $('#gallery');
+  function renderGallery(){
+    galleryEl.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    GALLERY.forEach(src => {
+      const img = document.createElement('img');
+      img.dataset.src = src; img.alt = 'Gallery image'; img.loading = 'lazy';
+      frag.appendChild(img);
+    });
+    galleryEl.appendChild(frag);
+    setupLazyImages();
+  }
+
+  function setupLazyImages(){
+    const io = new IntersectionObserver((entries, obs) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const img = e.target; img.src = img.dataset.src; img.onload = () => img.classList.add('visible');
+          obs.unobserve(img);
+        }
+      });
+    }, { rootMargin: '200px' });
+    $$('#gallery img').forEach(img => io.observe(img));
+  }
+
+  // =====================================
+  // Hero FX Canvas (particles + springs)
+  // =====================================
+  function heroFX(){
+    const c = document.getElementById('fx'); const ctx = c.getContext('2d');
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    const W = c.clientWidth * DPR, H = c.clientHeight * DPR; c.width = W; c.height = H;
+    ctx.clearRect(0,0,W,H);
+    const P = Array.from({length: 90}, () => ({
+      x: Math.random()*W, y: Math.random()*H, vx: (Math.random()-.5)*.6, vy: (Math.random()-.5)*.6, r: 1 + Math.random()*2
+    }));
+    let mouse = {x: W/2, y: H/2};
+    c.addEventListener('pointermove', e => { const rect = c.getBoundingClientRect(); mouse = { x: (e.clientX-rect.left)*DPR, y: (e.clientY-rect.top)*DPR }; });
+    let raf;
+    function step(){
+      ctx.clearRect(0,0,W,H);
+      ctx.globalCompositeOperation = 'lighter';
+      P.forEach(p => {
+        // spring toward mouse
+        const dx = (mouse.x - p.x)*0.0015, dy = (mouse.y - p.y)*0.0015;
+        p.vx += dx; p.vy += dy; p.vx *= 0.99; p.vy *= 0.99;
+        p.x += p.vx; p.y += p.vy;
+        if (p.x<0||p.x>W) p.vx*=-1; if (p.y<0||p.y>H) p.vy*=-1;
+        const g = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,18*p.r);
+        g.addColorStop(0, `hsla(${getComputedStyle(document.documentElement).getPropertyValue('--hue')},85%,60%,.9)`);
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x,p.y, 14*p.r, 0, Math.PI*2); ctx.fill();
+      });
+      raf = requestAnimationFrame(step);
+    }
+    step();
+    // cleanup on visibility change
+    document.addEventListener('visibilitychange', () => { if (document.hidden) cancelAnimationFrame(raf); else step(); });
+  }
+
+  // =====================================
+  // Marquee setup (duplicated content for seamless loop)
+  // =====================================
+  function buildMarquees(){
+    const labels = ['Performance','Lazy Load','Accessiblity','Transforms','Opacity','Grid','Flexbox','Debounce','Throttle','LocalStorage','Drawer','Dialog','Accordion','Canvas FX','Keyboard Nav'];
+    const pills = labels.map(x => `<span class="pill">${x}</span>`).join('');
+    $('#marqueeA').innerHTML = pills+pills; $('#marqueeB').innerHTML = pills+pills;
+  }
+
+  // =====================================
+  // Global search (filters products + posts + gallery)
+  // =====================================
+  const globalSearch = $('#globalSearch');
+  globalSearch.addEventListener('input', debounce(e => {
+    const q = e.target.value.toLowerCase();
+    // Products
+    const list = PRODUCTS.filter(p => p.name.toLowerCase().includes(q) || p.tag.includes(q));
+    renderProducts(list);
+    // Posts
+    blogEl.innerHTML='';
+    POSTS.filter(p=> p.t.toLowerCase().includes(q) || p.c.toLowerCase().includes(q)).forEach(p=>{
+      const d=document.createElement('details'); d.open=true; const s=document.createElement('summary'); s.textContent=p.t; const c=document.createElement('div'); c.className='muted'; c.textContent=p.c; d.append(s,c); blogEl.appendChild(d);
+    });
+    // Gallery (simple: show all; advanced: could filter by color tags)
+  }, 120));
+
+  // Keyboard shortcuts
+  window.addEventListener('keydown', e => {
+    if (e.key === '/') { e.preventDefault(); globalSearch.focus(); }
+    if (e.key === '?') { toast('Shortcuts: / focus search, c toggle cart, g go to gallery'); }
+    if (e.key.toLowerCase() === 'c') { openCart(!cartDrawer.classList.contains('open')); }
+    if (e.key.toLowerCase() === 'g') { smoothScroll('#gallerySection'); }
+  });
+
+  // =====================================
+  // Performance tools demo
+  // =====================================
+  function measurePaint(){
+    const t0 = performance.now();
+    requestAnimationFrame(() => {
+      const t1 = performance.now();
+      toast(`RAF delta: ${(t1-t0).toFixed(2)}ms`);
+    });
+  }
+
+  function fakeWork(){
+    const t0 = performance.now();
+    let s = 0; for (let i=0;i<2e6;i++){ s += Math.sqrt(i%99); }
+    const t1 = performance.now();
+    toast(`Work took ${(t1-t0).toFixed(1)}ms`);
+    return s;
+  }
+
+  // =====================================
+  // Init
+  // =====================================
+  function init(){
+    loadSettings();
+    renderProducts();
+    renderCart();
+    renderBlog();
+    renderGallery();
+    heroFX();
+    buildMarquees();
+  }
+  init();
+
+  // ==============================
+  // Cross-browser & accessibility
+  // ==============================
+  // Ensure dialog closes on backdrop click
+  const dlg = document.getElementById('settings');
+  dlg.addEventListener('click', (e) => { const r = dlg.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) dlg.close(); });
+
+  // Trap focus when dialog open (basic)
+  dlg.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const f = $$('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])', dlg).filter(el => !el.hasAttribute('disabled'));
+    if (!f.length) return; const first = f[0], last = f[f.length-1];
+    if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
+    else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
+  });
+
+  // Accessibility: announce section when navigating via buttons
+  ['#productsSection','#blogSection','#gallerySection'].forEach(sel=>{
+    const el = document.querySelector(sel); if (!el) return; el.setAttribute('tabindex','-1');
+  });
+
+  // Progressive enhancement: if dialog unsupported
+  if (typeof HTMLDialogElement === 'undefined') {
+    document.getElementById('openSettings').addEventListener('click', () => alert('Settings (dialog) not supported in this browser.'));
+  }
+
+  </script>
+</body>
+</html>
